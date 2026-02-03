@@ -26,7 +26,9 @@ export class CharactersService {
       if (!availableSources.includes(source)) {
         throw new Error('Fuente no disponible.');
       }
-      return this.fetchBySource(source);
+      const character = await this.fetchBySource(source);
+      await this.upsertCharacter(character);
+      return character;
     }
 
     const chosenSource = this.pickRandom(availableSources);
@@ -35,27 +37,80 @@ export class CharactersService {
       throw new Error('No hay fuentes de personajes disponibles.');
     }
 
-    return this.fetchBySource(chosenSource);
+    const character = await this.fetchBySource(chosenSource);
+    await this.upsertCharacter(character);
+    return character;
   }
 
   async recordVote(input: VoteCharacterRequestDto): Promise<VoteCharacterResponseDto> {
+    const collection = await this.getCharactersCollection();
+    const now = new Date();
+    const isLike = input.vote === 'like';
+    const setOnInsert: Record<string, unknown> = {
+      createdAt: now,
+      payload: {},
+    };
+    if (isLike) {
+      setOnInsert.dislikes = 0;
+    } else {
+      setOnInsert.likes = 0;
+    }
+
+    await collection.updateOne(
+      { source: input.source, externalId: String(input.sourceId) },
+      {
+        $set: {
+          source: input.source,
+          externalId: String(input.sourceId),
+          name: input.name,
+          imageUrl: input.image,
+          lastEvaluatedAt: now,
+        },
+        $setOnInsert: setOnInsert,
+        $inc: isLike ? { likes: 1 } : { dislikes: 1 },
+      },
+      { upsert: true },
+    );
+
+    return { ok: true };
+  }
+
+  private async upsertCharacter(character: CharacterResponseDto): Promise<void> {
+    const collection = await this.getCharactersCollection();
+    const now = new Date();
+
+    await collection.updateOne(
+      { source: character.source, externalId: String(character.sourceId) },
+      {
+        $set: {
+          source: character.source,
+          externalId: String(character.sourceId),
+          name: character.name,
+          imageUrl: character.image,
+        },
+        $setOnInsert: {
+          likes: 0,
+          dislikes: 0,
+          lastEvaluatedAt: null,
+          payload: {},
+          createdAt: now,
+        },
+      },
+      { upsert: true },
+    );
+  }
+
+  private async getCharactersCollection() {
     const dbName = process.env.MONGO_DB;
     const collectionName = process.env.MONGO_COLLECTION;
 
     if (!dbName || !collectionName) {
-      throw new Error('Faltan MONGO_DB o MONGO_COLLECTION para guardar votos.');
+      throw new Error('Faltan MONGO_DB o MONGO_COLLECTION para guardar datos.');
     }
 
     const client = getMongoClient();
     await client.connect();
-
-    const collection = client.db(dbName).collection(collectionName);
-    await collection.insertOne({
-      ...input,
-      createdAt: new Date(),
-    });
-
-    return { ok: true };
+    return client.db(dbName).collection(collectionName);
   }
 
   private getAvailableSources(): CharacterSource[] {
