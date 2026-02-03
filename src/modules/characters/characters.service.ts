@@ -1,11 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { getMongoClient } from '../../database/mongo.client';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import type {
   CharacterResponseDto,
   CharacterSource,
+  CharactersListResponseDto,
+  ListCharactersQueryDto,
   VoteCharacterRequestDto,
   VoteCharacterResponseDto,
 } from './dto/characters.dto';
+import type { CharacterListItemDto } from './dto/characters.dto';
+import { Character } from './schemas/character.schema';
+import type { CharacterDocument } from './schemas/character.schema';
 
 interface CacheEntry {
   value: number;
@@ -13,6 +25,12 @@ interface CacheEntry {
 }
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const RICK_AND_MORTY_API_BASE =
+  process.env.RICK_AND_MORTY_API_BASE ?? 'https://rickandmortyapi.com/api';
+const POKEMON_API_BASE =
+  process.env.POKEMON_API_BASE ?? 'https://pokeapi.co/api/v2';
+const SUPERHERO_API_BASE =
+  process.env.SUPERHERO_API_BASE ?? 'https://superheroapi.com/api';
 
 @Injectable()
 export class CharactersService {
@@ -20,11 +38,16 @@ export class CharactersService {
   private rickAndMortyCount: CacheEntry | null = null;
   private pokemonCount: CacheEntry | null = null;
 
+  constructor(
+    @InjectModel(Character.name)
+    private readonly characterModel: Model<CharacterDocument>,
+  ) {}
+
   async getRandomCharacter(source?: CharacterSource): Promise<CharacterResponseDto> {
     const availableSources = this.getAvailableSources();
     if (source) {
       if (!availableSources.includes(source)) {
-        throw new Error('Fuente no disponible.');
+        throw new BadRequestException('Fuente no disponible.');
       }
       const character = await this.fetchBySource(source);
       await this.upsertCharacter(character);
@@ -34,7 +57,7 @@ export class CharactersService {
     const chosenSource = this.pickRandom(availableSources);
 
     if (!chosenSource) {
-      throw new Error('No hay fuentes de personajes disponibles.');
+      throw new ServiceUnavailableException('No hay fuentes de personajes disponibles.');
     }
 
     const character = await this.fetchBySource(chosenSource);
@@ -43,7 +66,6 @@ export class CharactersService {
   }
 
   async recordVote(input: VoteCharacterRequestDto): Promise<VoteCharacterResponseDto> {
-    const collection = await this.getCharactersCollection();
     const now = new Date();
     const isLike = input.vote === 'like';
     const setOnInsert: Record<string, unknown> = {
@@ -56,7 +78,7 @@ export class CharactersService {
       setOnInsert.likes = 0;
     }
 
-    await collection.updateOne(
+    await this.characterModel.updateOne(
       { source: input.source, externalId: String(input.sourceId) },
       {
         $set: {
@@ -75,11 +97,55 @@ export class CharactersService {
     return { ok: true };
   }
 
+  async listCharacters(query: ListCharactersQueryDto): Promise<CharactersListResponseDto> {
+    const filter: Record<string, unknown> = {};
+    if (query.source) {
+      filter.source = query.source;
+    }
+
+    const sortBy = query.sortBy ?? 'createdAt';
+    const order = query.order ?? 'desc';
+    const sort: Record<string, 1 | -1> = {
+      [sortBy]: order === 'asc' ? 1 : -1,
+    };
+
+    const limit = query.limit ?? 20;
+    const skip = query.skip ?? 0;
+
+    const [items, total] = await Promise.all([
+      this.characterModel
+        .find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.characterModel.countDocuments(filter),
+    ]);
+
+    const mapped = items.map((item) => ({
+      source: item.source,
+      sourceId: String(item.externalId),
+      name: item.name,
+      image: item.imageUrl ?? '',
+      likes: item.likes ?? 0,
+      dislikes: item.dislikes ?? 0,
+      lastEvaluatedAt: item.lastEvaluatedAt
+        ? new Date(item.lastEvaluatedAt).toISOString()
+        : null,
+    })) as CharacterListItemDto[];
+
+    return {
+      items: mapped,
+      total,
+      limit,
+      skip,
+    };
+  }
+
   private async upsertCharacter(character: CharacterResponseDto): Promise<void> {
-    const collection = await this.getCharactersCollection();
     const now = new Date();
 
-    await collection.updateOne(
+    await this.characterModel.updateOne(
       { source: character.source, externalId: String(character.sourceId) },
       {
         $set: {
@@ -100,19 +166,6 @@ export class CharactersService {
     );
   }
 
-  private async getCharactersCollection() {
-    const dbName = process.env.MONGO_DB;
-    const collectionName = process.env.MONGO_COLLECTION;
-
-    if (!dbName || !collectionName) {
-      throw new Error('Faltan MONGO_DB o MONGO_COLLECTION para guardar datos.');
-    }
-
-    const client = getMongoClient();
-    await client.connect();
-    return client.db(dbName).collection(collectionName);
-  }
-
   private getAvailableSources(): CharacterSource[] {
     const sources: CharacterSource[] = ['rickandmorty', 'pokemon'];
     if (process.env.SUPERHERO_API_KEY) {
@@ -130,16 +183,16 @@ export class CharactersService {
       case 'superhero':
         return this.getSuperheroCharacter();
       default:
-        throw new Error('Fuente no soportada.');
+        throw new BadRequestException('Fuente no soportada.');
     }
   }
 
   private async getRickAndMortyCharacter(): Promise<CharacterResponseDto> {
     const count = await this.getRickAndMortyCount();
     const id = this.randomId(count);
-    const response = await fetch(`https://rickandmortyapi.com/api/character/${id}`);
+    const response = await fetch(`${RICK_AND_MORTY_API_BASE}/character/${id}`);
     if (!response.ok) {
-      throw new Error('No se pudo obtener personaje de Rick and Morty.');
+      throw new BadGatewayException('No se pudo obtener personaje de Rick and Morty.');
     }
 
     const data = (await response.json()) as { id: number; name: string; image: string };
@@ -154,9 +207,9 @@ export class CharactersService {
   private async getPokemonCharacter(): Promise<CharacterResponseDto> {
     const count = await this.getPokemonCount();
     const id = this.randomId(count);
-    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+    const response = await fetch(`${POKEMON_API_BASE}/pokemon/${id}`);
     if (!response.ok) {
-      throw new Error('No se pudo obtener personaje de Pokemon.');
+      throw new BadGatewayException('No se pudo obtener personaje de Pokemon.');
     }
 
     const data = (await response.json()) as {
@@ -184,14 +237,14 @@ export class CharactersService {
   private async getSuperheroCharacter(): Promise<CharacterResponseDto> {
     const apiKey = process.env.SUPERHERO_API_KEY;
     if (!apiKey) {
-      throw new Error('Falta SUPERHERO_API_KEY para usar Superhero API.');
+      throw new BadRequestException('Falta SUPERHERO_API_KEY para usar Superhero API.');
     }
 
     const maxId = Number(process.env.SUPERHERO_MAX_ID ?? 731);
     const id = this.randomId(maxId);
-    const response = await fetch(`https://superheroapi.com/api/${apiKey}/${id}`);
+    const response = await fetch(`${SUPERHERO_API_BASE}/${apiKey}/${id}`);
     if (!response.ok) {
-      throw new Error('No se pudo obtener personaje de Superhero API.');
+      throw new BadGatewayException('No se pudo obtener personaje de Superhero API.');
     }
 
     const data = (await response.json()) as {
@@ -204,7 +257,7 @@ export class CharactersService {
 
     if (data.response === 'error') {
       this.logger.warn(`Superhero API error: ${data.error ?? 'desconocido'}`);
-      throw new Error('Superhero API respondio con error.');
+      throw new BadGatewayException('Superhero API respondio con error.');
     }
 
     return {
@@ -220,9 +273,9 @@ export class CharactersService {
       return this.rickAndMortyCount.value;
     }
 
-    const response = await fetch('https://rickandmortyapi.com/api/character');
+    const response = await fetch(`${RICK_AND_MORTY_API_BASE}/character`);
     if (!response.ok) {
-      throw new Error('No se pudo obtener el total de Rick and Morty.');
+      throw new BadGatewayException('No se pudo obtener el total de Rick and Morty.');
     }
 
     const data = (await response.json()) as { info?: { count?: number } };
@@ -236,9 +289,9 @@ export class CharactersService {
       return this.pokemonCount.value;
     }
 
-    const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1');
+    const response = await fetch(`${POKEMON_API_BASE}/pokemon?limit=1`);
     if (!response.ok) {
-      throw new Error('No se pudo obtener el total de Pokemon.');
+      throw new BadGatewayException('No se pudo obtener el total de Pokemon.');
     }
 
     const data = (await response.json()) as { count?: number };

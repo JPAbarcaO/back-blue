@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './modules/app/app.controller';
 import { AppService } from './modules/app/app.service';
 import { AuthModule } from './modules/auth/auth.module';
@@ -41,10 +43,27 @@ function buildMongoUri(configService: ConfigService): string {
         uri: buildMongoUri(configService),
       }),
     }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: Number(configService.get<string>('RATE_LIMIT_TTL') ?? 60),
+            limit: Number(configService.get<string>('RATE_LIMIT_LIMIT') ?? 60),
+          },
+        ],
+      }),
+    }),
     AuthModule,
     CharactersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
