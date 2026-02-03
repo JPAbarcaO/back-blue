@@ -1,6 +1,7 @@
 import { BadRequestException, Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { MeResponseDto, TokenRequestDto, TokenResponseDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Auth')
@@ -9,9 +10,13 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('token')
-  async getToken(
-    @Body() body: { sub?: string; userId?: string; email?: string; name?: string } = {},
-  ): Promise<{ accessToken: string }> {
+  @ApiOperation({ summary: 'Generar JWT' })
+  @ApiBody({ type: TokenRequestDto })
+  @ApiResponse({ status: 201, description: 'Token generado', type: TokenResponseDto })
+  @ApiResponse({ status: 400, description: 'Debes enviar al menos `sub` o `userId`.' })
+  getToken(
+    @Body() body: TokenRequestDto = {},
+  ): Promise<TokenResponseDto> {
     const payload: Record<string, unknown> = {};
     const subject = body.sub ?? body.userId;
 
@@ -33,9 +38,12 @@ export class AuthController {
   }
 
   @Get('me')
+  @ApiOperation({ summary: 'Obtener perfil desde JWT' })
   @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Token valido', type: MeResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UseGuards(JwtAuthGuard)
-  getProfile(@Req() req: { user?: unknown }): { user?: unknown } {
+  getProfile(@Req() req: { user?: Record<string, unknown> }): MeResponseDto {
     return { user: req.user };
   }
 }
