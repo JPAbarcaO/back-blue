@@ -1,98 +1,209 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# ms-blue
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend en NestJS con MongoDB y JWT.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**Resumen**
+- API base con NestJS.
+- Conexion a MongoDB Atlas usando Mongoose.
+- Seguridad con JWT (sin OAuth2 en este momento).
+- Documentacion Swagger en `/docs`.
 
-## Description
+**Lo Ultimo Instalado / Agregado**
+- Mongoose y `@nestjs/mongoose` para la conexion a MongoDB.
+- Swagger (`@nestjs/swagger` + `swagger-ui-express`) para documentar la API.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+**Requisitos (For Dummies)**
+- Node.js 20+ (recomendado 22).
+- npm 9+ (se instala con Node.js).
+- Cuenta de MongoDB Atlas o un cluster accesible.
+- (Opcional) NestJS CLI si quieres usar comandos `nest`, pero para correr este proyecto **no es obligatorio**.
+- (Opcional) Git si vas a clonar el proyecto desde un repositorio.
+- No necesitas instalar MongoDB en tu PC (la base puede estar en Atlas).
+- Compatible con Windows, macOS y Linux.
 
-## Project setup
+**Paso a Paso (For Dummies)**
+1. Instala Node.js (esto tambien instala npm).
+   Si ya tienes Node.js 20+ y npm 9+, puedes saltar este paso.
+   Video recomendado (Node.js + NestJS): `https://www.youtube.com/watch?v=8xJE99tsPn0`
+   Video apoyo (NestJS + MongoDB + Mongoose): `https://www.youtube.com/watch?v=K7TYj86Z3rY`
+   Para verificar la instalacion en Windows, macOS o Linux, abre una terminal y ejecuta:
+```
+bash
+node -v
+npm -v
+```
+2. (Opcional) Instala NestJS CLI si quieres usar comandos `nest`:
+```
+bash
+npm i -g @nestjs/cli
+```
+3. Descarga el proyecto y abre una terminal en la carpeta `ms-blue`.
+   Si tienes un ZIP, descomprimelo y entra a la carpeta del proyecto.
+   En Windows puedes usar PowerShell o CMD. En macOS y Linux usa Terminal.
+4. Instala dependencias del proyecto (esto instala NestJS, Mongoose y Swagger automaticamente).
+```
+bash
+npm install
+```
+5. Crea tu archivo `.env` en la raiz del proyecto.
+6. Copia y completa esta configuracion basica (reemplaza los valores de ejemplo).
+```
+env
+PORT=3000
 
-```bash
-$ npm install
+MONGO_URL=cluster0.sm4s02l.mongodb.net
+MONGO_USER=root_be
+MONGO_PASS=tu_password_aqui
+MONGO_DB=be_test
+MONGO_COLLECTION=characters
+
+JWT_SECRET=un_secreto_largo_y_unico
+JWT_EXPIRES_IN=1h
+```
+7. Inicia el proyecto.
+```
+bash
+npm run start
+```
+8. Debes ver en consola:
+   “MongoDB conectado correctamente.”
+   “App escuchando en el puerto 3000.”
+9. Swagger disponible en `http://localhost:3000/docs`.
+10. (Opcional) Prueba los endpoints desde Swagger o con `curl` (ver seccion JWT).
+
+**Notas de Configuracion**
+- `MONGO_URL` es solo el host (sin `mongodb://` ni `mongodb+srv://`).
+- `MONGO_USER` y `MONGO_PASS` deben existir en MongoDB Atlas.
+- `MONGO_DB` es la base de datos y `MONGO_COLLECTION` es la coleccion a usar.
+- `JWT_SECRET` es obligatorio. Si falta, la app fallara al iniciar.
+- `JWT_EXPIRES_IN` acepta valores como `1h`, `15m` o un numero en segundos.
+- La conexion a MongoDB se hace con Mongoose y usa estas variables de entorno.
+
+**MongoDB Atlas (Configuracion Recomendada)**
+Si no tienes base de datos propia, puedes crearla gratis en MongoDB Atlas (capa gratuita). Web: `https://www.mongodb.com/atlas`.
+1. Registrate en la web de MongoDB Atlas y crea un cluster de la capa gratuita.
+2. Crea un usuario de base de datos (usuario y clave). Puedes usar el que te entrega Atlas o configurar uno propio.
+3. Configura el acceso de red (IP Allowlist) para permitir tu IP actual o `0.0.0.0/0` si estas en desarrollo y sabes lo que implica.
+4. Crea la base de datos y la coleccion (usa los valores de `MONGO_DB` y `MONGO_COLLECTION`).
+5. Crea los indices en la coleccion (tab `Indexes`), tal como en la imagen.
+6. Inserta un documento inicial (Pikachu) para asegurar que la coleccion exista.
+7. Sigue los pasos de la pagina de Atlas para obtener los datos de conexion y usa esos valores en el `.env` (o utiliza la conexion que te hayan proporcionado).
+
+Indices requeridos:
+- `_id_` (creado automaticamente, `unique`).
+- `source_1_externalId_1` (compuesto, `unique` sobre `source` + `externalId`).
+- `likes_-1` (descendente).
+- `dislikes_-1` (descendente).
+- `lastEvaluatedAt_-1` (descendente).
+- `source_1_name_1` (compuesto sobre `source` + `name`).
+
+Ejemplo de documento (tab `Documents` -> `ADD DATA`):
+```
+json
+{
+  "source": "pokemon",
+  "externalId": "25",
+  "name": "Pikachu",
+  "imageUrl": null,
+  "likes": 0,
+  "dislikes": 0,
+  "lastEvaluatedAt": null,
+  "payload": {}
+}
 ```
 
-## Compile and run the project
+**Notas de Conexion (Atlas)**
+- `MONGO_URL` es solo el host (sin `mongodb://` ni `mongodb+srv://`). Ejemplo: `cluster0.xxxxx.mongodb.net`
+- `MONGO_USER` y `MONGO_PASS` deben corresponder al usuario creado en Atlas.
+- Si alguien ya te entrego las variables del `.env`, solo completa esos valores y podras conectarte.
 
-```bash
-# development
-$ npm run start
+Como obtener el host correcto:
+- En Atlas, ve a `Database` -> tu cluster -> `Connect` -> `Drivers`.
+- Copia el connection string (por ejemplo: `mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority`).
+- El host para `MONGO_URL` es la parte despues de `@` y antes de `/` (ejemplo: `cluster0.xxxxx.mongodb.net`).
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+Seed de Pikachu (opciones):
+- Desde Atlas UI: tab `Documents` -> `ADD DATA` -> pega el JSON del ejemplo de abajo.
+- Desde `mongosh` (si lo usas localmente):
+```
+bash
+mongosh "mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/<db>"
+```
+```
+javascript
+use <db>
+db.<collection>.insertOne({
+  source: "pokemon",
+  externalId: "25",
+  name: "Pikachu",
+  imageUrl: null,
+  likes: 0,
+  dislikes: 0,
+  lastEvaluatedAt: null,
+  payload: {}
+})
 ```
 
-## Run tests
+**Comandos Utiles**
+```
+bash
+# desarrollo
+npm run start:dev
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# tests
+npm run test
 ```
 
-## Deployment
+**JWT (Uso Basico)**
+- Puedes obtener un JWT desde `POST /auth/token` enviando al menos `sub` o `userId`.
+- Los endpoints de `characters` y `GET /auth/me` requieren un token JWT valido.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+Ejemplo para obtener token:
+```
+bash
+curl -X POST http://localhost:3000/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"sub":"demo-user","email":"demo@local","name":"Demo"}'
+```
+```
+powershell
+curl -Method Post http://localhost:3000/auth/token `
+  -Headers @{ "Content-Type" = "application/json" } `
+  -Body '{"sub":"demo-user","email":"demo@local","name":"Demo"}'
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Ejemplos de llamadas con token:
+```
+bash
+curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/auth/me
+```
+```
+powershell
+curl -Headers @{ "Authorization" = "Bearer <tu_token>" } http://localhost:3000/auth/me
+```
+```
+bash
+curl -H "Authorization: Bearer <tu_token>" "http://localhost:3000/characters/random?source=pokemon"
+```
+```
+powershell
+curl -Headers @{ "Authorization" = "Bearer <tu_token>" } "http://localhost:3000/characters/random?source=pokemon"
+```
+```
+bash
+curl -X POST http://localhost:3000/characters/vote \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"source":"pokemon","sourceId":"25","name":"Pikachu","image":"https://img","vote":"like"}'
+```
+```
+powershell
+curl -Method Post http://localhost:3000/characters/vote `
+  -Headers @{ "Authorization" = "Bearer <tu_token>"; "Content-Type" = "application/json" } `
+  -Body '{"source":"pokemon","sourceId":"25","name":"Pikachu","image":"https://img","vote":"like"}'
+```
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+**Errores Comunes**
+- `ENOTFOUND` o DNS: revisa `MONGO_URL` y tu conexion.
+- `authentication failed`: revisa usuario/password en Atlas.
+- `Falta JWT_SECRET`: agrega la variable en `.env`.

@@ -1,8 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { getConnectionToken } from '@nestjs/mongoose';
+import type { Connection } from 'mongoose';
 import { AppModule } from './app.module';
-import { pingMongo } from './database/mongo.client';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,8 +19,15 @@ async function bootstrap() {
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, swaggerDocument);
 
-  await pingMongo();
-  logger.log('MongoDB conectado correctamente.');
+  const mongooseConnection = app.get<Connection>(getConnectionToken());
+  if (mongooseConnection.readyState === 1) {
+    logger.log('MongoDB conectado correctamente.');
+  } else {
+    mongooseConnection.once('connected', () => logger.log('MongoDB conectado correctamente.'));
+    mongooseConnection.on('error', (error) =>
+      logger.error(`Error de MongoDB: ${error.message}`),
+    );
+  }
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
   app.setGlobalPrefix('api/v1/');
