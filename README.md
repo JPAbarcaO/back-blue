@@ -7,12 +7,14 @@ Backend en NestJS con MongoDB y JWT.
 - Conexion a MongoDB Atlas usando Mongoose.
 - Seguridad con JWT (sin OAuth2 en este momento).
 - Documentacion Swagger en `/docs`.
+- Health check simple en `/api/v1/health` para saber si la API esta viva (monitoring/uptime).
 
 **Lo Ultimo Instalado / Agregado**
 - Mongoose y `@nestjs/mongoose` para la conexion a MongoDB.
 - Swagger (`@nestjs/swagger` + `swagger-ui-express`) para documentar la API.
 - Rate limit global y logs de requests.
 - Integracion con 4 APIs externas (Rick and Morty, Pokemon, Superhero, Dragon Ball).
+- Modulo `health` con endpoint publico para monitoreo.
 
 **Requisitos (Paso a Paso)**
 - Node.js 20+ (recomendado 22).
@@ -32,6 +34,7 @@ Backend en NestJS con MongoDB y JWT.
 - Para usar endpoints protegidos (`/api/v1/characters` y `/api/v1/auth/me`), primero debes registrarte y hacer login para obtener un token.
 - Para usar Superhero, agrega `SUPERHERO_API_KEY` en el `.env`.
 - Base URL local de la API: `http://localhost:3000/api/v1`.
+- Puedes probar rapido si el servidor esta arriba en `http://localhost:3000/api/v1/health`.
 
 **Paso a Paso**
 1. Instala Node.js (esto tambien instala npm).
@@ -106,45 +109,52 @@ npm run start
    “MongoDB conectado correctamente.”
    “App escuchando en el puerto 3000.”
    Si ves errores, revisa la seccion "Soluciones Comunes".
-9. Swagger disponible en `http://localhost:3000/docs`.
-10. (Opcional) Prueba los endpoints desde Swagger o con `curl` (ver seccion JWT).
+9. Verifica que la API responde con el health check (se usa para monitoreo y saber si el server esta vivo):
+   `http://localhost:3000/api/v1/health` (debe responder `{ "status": "ok" }`).
+10. Swagger disponible en `http://localhost:3000/docs`.
+11. (Opcional) Prueba los endpoints desde Swagger o con `curl` (ver seccion JWT).
     Recuerda: `random` y `vote` son publicos; `list` y `me` requieren token.
     Base URL local de la API: `http://localhost:3000/api/v1`.
 
 **Uso Paso a Paso**
-1. Registrar usuario (crea usuario, no devuelve token):
+1. Verificar que la API este viva (sin token):
+```
+bash
+curl http://localhost:3000/api/v1/health
+```
+2. Registrar usuario (crea usuario, no devuelve token):
 ```
 bash
 curl -X POST http://localhost:3000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@local","password":"super-seguro-123","name":"Demo"}'
 ```
-2. Login (aqui se obtiene el JWT):
+3. Login (aqui se obtiene el JWT):
 ```
 bash
 curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@local","password":"super-seguro-123"}'
 ```
-3. Guardar el token y usarlo en los siguientes pasos.
-4. Obtener un personaje aleatorio (sin token, rate limit 30/min):
+4. Guardar el token y usarlo en los siguientes pasos.
+5. Obtener un personaje aleatorio (sin token, rate limit 30/min):
 ```
 bash
 curl "http://localhost:3000/api/v1/characters/random?source=pokemon"
 ```
-5. Votar like/dislike (sin token, rate limit 30/min):
+6. Votar like/dislike (sin token, rate limit 30/min):
 ```
 bash
 curl -X POST http://localhost:3000/api/v1/characters/vote \
   -H "Content-Type: application/json" \
   -d '{"source":"pokemon","sourceId":"25","name":"Pikachu","image":"https://img","vote":"like"}'
 ```
-6. Listar personajes guardados (requiere token):
+7. Listar personajes guardados (requiere token):
 ```
 bash
 curl -H "Authorization: Bearer <tu_token>" "http://localhost:3000/api/v1/characters?sortBy=likes&order=desc&limit=20&skip=0"
 ```
-7. Consultas rapidas (requieren token):
+8. Consultas rapidas (requieren token):
 ```
 bash
 curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/characters/top-like
@@ -157,7 +167,7 @@ curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/characte
 bash
 curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/characters/last-evaluated
 ```
-8. Abrir Swagger para probar sin consola:
+9. Abrir Swagger para probar sin consola:
    `http://localhost:3000/docs`
 
 **Soluciones Comunes**
@@ -308,6 +318,7 @@ npm run test
 
 **JWT (Uso Basico)**
 - El JWT se obtiene desde `POST /api/v1/auth/login` (el registro solo crea el usuario).
+- `GET /api/v1/health` es publico y sirve para verificar que la API esta viva.
 - `GET /api/v1/characters/random` y `POST /api/v1/characters/vote` son publicos (limitados a 30 req/min).
 - `GET /api/v1/characters`, `GET /api/v1/auth/me` requieren token JWT valido.
 

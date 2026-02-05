@@ -6,7 +6,7 @@ export type CharacterDocument = HydratedDocument<Character>;
 
 @Schema({ timestamps: true })
 export class Character {
-  @Prop({ required: true, enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'] })
+  @Prop({ type: String, required: true, enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'] })
   source!: CharacterSource;
 
   @Prop({ required: true })
