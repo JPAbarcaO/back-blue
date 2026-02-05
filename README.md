@@ -80,6 +80,7 @@ MONGO_USER=root_be
 MONGO_PASS=tu_password_aqui
 MONGO_DB=be_test
 MONGO_COLLECTION=characters
+MONGO_USERS_COLLECTION=users
 
 JWT_SECRET=un_secreto_largo_y_unico
 JWT_EXPIRES_IN=1h
@@ -192,7 +193,9 @@ curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/characte
 **Notas de Configuracion**
 - `MONGO_URL` es solo el host (sin `mongodb://` ni `mongodb+srv://`).
 - `MONGO_USER` y `MONGO_PASS` deben existir en MongoDB Atlas.
-- `MONGO_DB` es la base de datos y `MONGO_COLLECTION` es la coleccion a usar.
+- `MONGO_DB` es la base de datos.
+- `MONGO_COLLECTION` es la coleccion de personajes.
+- `MONGO_USERS_COLLECTION` es la coleccion de usuarios (por defecto `users`).
 - `JWT_SECRET` es obligatorio. Si falta, la app fallara al iniciar.
 - `JWT_EXPIRES_IN` acepta valores como `1h`, `15m` o un numero en segundos.
 - `BCRYPT_SALT_ROUNDS` controla el hash de passwords (por defecto 10).
@@ -271,7 +274,7 @@ json
 
 **Usuarios (MongoDB Atlas)**
 Lo que debes hacer manualmente en Atlas:
-1. Crear la coleccion `users` en `MONGO_DB`.
+1. Crear la coleccion `users` (o el nombre de `MONGO_USERS_COLLECTION`) en `MONGO_DB`.
 2. Crear un indice unico para `email` (campo `email`, orden `1`, `unique = true`).
 
 Lo que se crea automaticamente cuando se registra el primer usuario:
@@ -298,6 +301,13 @@ json
 
 Nota sobre reinicio de clave:
 - El botón de "reiniciar clave" en el front actualizará el `passwordHash` a una clave basica definida por el equipo y comunicada al usuario.
+
+Variables relacionadas (ejemplo en `.env`):
+```
+env
+MONGO_DB=be_test
+MONGO_USERS_COLLECTION=users
+```
 
 **Notas de Conexion (Atlas)**
 - `MONGO_URL` es solo el host (sin `mongodb://` ni `mongodb+srv://`). Ejemplo: `cluster0.xxxxx.mongodb.net`
