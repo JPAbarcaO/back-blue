@@ -158,3 +158,8 @@ export class CharactersListResponseDto {
   @ApiProperty({ example: 0 })
   skip!: number;
 }
+
+export class CharacterSummaryResponseDto {
+  @ApiPropertyOptional({ type: CharacterListItemDto })
+  item?: CharacterListItemDto | null;
+}

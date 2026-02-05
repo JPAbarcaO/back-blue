@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CharactersService } from './characters.service';
 import {
   CharacterResponseDto,
+  CharacterSummaryResponseDto,
   CharactersListResponseDto,
   GetRandomCharacterQueryDto,
   ListCharactersQueryDto,
@@ -50,6 +51,39 @@ export class CharactersController {
     @Query() query: ListCharactersQueryDto,
   ): Promise<CharactersListResponseDto> {
     return this.charactersService.listCharacters(query);
+  }
+
+  @Get('top-like')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Personaje con mas likes' })
+  @ApiResponse({ status: 200, description: 'Personaje con mas likes', type: CharacterSummaryResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async topLike(): Promise<CharacterSummaryResponseDto> {
+    const item = await this.charactersService.getTopLikedCharacter();
+    return { item };
+  }
+
+  @Get('top-dislike')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Personaje con mas dislikes' })
+  @ApiResponse({ status: 200, description: 'Personaje con mas dislikes', type: CharacterSummaryResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async topDislike(): Promise<CharacterSummaryResponseDto> {
+    const item = await this.charactersService.getTopDislikedCharacter();
+    return { item };
+  }
+
+  @Get('last-evaluated')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Ultimo personaje evaluado' })
+  @ApiResponse({ status: 200, description: 'Ultimo personaje evaluado', type: CharacterSummaryResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async lastEvaluated(): Promise<CharacterSummaryResponseDto> {
+    const item = await this.charactersService.getLastEvaluatedCharacter();
+    return { item };
   }
 
   @Post('vote')

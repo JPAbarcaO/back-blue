@@ -145,6 +145,39 @@ export class CharactersService {
     };
   }
 
+  async getTopLikedCharacter(): Promise<CharacterListItemDto | null> {
+    return this.findSingleBySort({ likes: -1 });
+  }
+
+  async getTopDislikedCharacter(): Promise<CharacterListItemDto | null> {
+    return this.findSingleBySort({ dislikes: -1 });
+  }
+
+  async getLastEvaluatedCharacter(): Promise<CharacterListItemDto | null> {
+    return this.findSingleBySort({ lastEvaluatedAt: -1 });
+  }
+
+  private async findSingleBySort(
+    sort: Record<string, 1 | -1>,
+  ): Promise<CharacterListItemDto | null> {
+    const item = await this.characterModel.findOne({}).sort(sort).lean();
+    if (!item) {
+      return null;
+    }
+
+    return {
+      source: item.source,
+      sourceId: String(item.externalId),
+      name: item.name,
+      image: item.imageUrl ?? '',
+      likes: item.likes ?? 0,
+      dislikes: item.dislikes ?? 0,
+      lastEvaluatedAt: item.lastEvaluatedAt
+        ? new Date(item.lastEvaluatedAt).toISOString()
+        : null,
+    };
+  }
+
   private async upsertCharacter(character: CharacterResponseDto): Promise<void> {
     const now = new Date();
 
