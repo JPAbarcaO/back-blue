@@ -29,8 +29,9 @@ Backend en NestJS con MongoDB y JWT.
 - Existe un archivo `.env` en la raiz del proyecto (al lado de `package.json`).
 - Tienes usuario y password de MongoDB Atlas o una conexion que ya te entregaron.
 - Conoces el host correcto de Atlas (`cluster0.xxxxx.mongodb.net`).
-- Para usar endpoints protegidos (`/characters` y `/auth/me`), primero debes registrarte y hacer login para obtener un token.
+- Para usar endpoints protegidos (`/api/v1/characters` y `/api/v1/auth/me`), primero debes registrarte y hacer login para obtener un token.
 - Para usar Superhero, agrega `SUPERHERO_API_KEY` en el `.env`.
+- Base URL local de la API: `http://localhost:3000/api/v1`.
 
 **Paso a Paso**
 1. Instala Node.js (esto tambien instala npm).
@@ -48,17 +49,24 @@ npm -v
 bash
 npm i -g @nestjs/cli
 ```
-3. Descarga el proyecto y abre una terminal en la carpeta `ms-blue`.
-   Si tienes un ZIP, descomprimelo y entra a la carpeta del proyecto.
+3. Descarga el proyecto y abre una terminal en la carpeta del proyecto.
+   Si tienes Git, clona el repo y entra a la carpeta:
+```
+bash
+git clone https://github.com/JPAbarcaO/back-blue
+cd back-blue
+```
+   Si no tienes Git, descarga el ZIP desde GitHub, descomprimelo y entra a la carpeta (normalmente `back-blue`).
    En Windows puedes usar PowerShell o CMD. En macOS y Linux usa Terminal.
 4. Instala dependencias del proyecto (esto instala NestJS, Mongoose y Swagger automaticamente).
 ```
 bash
 npm install
 ```
-5. Si no se entrego el archivo `.env`, crea un archivo llamado `.env` en la raiz del proyecto (mismo nivel que `package.json`).
+5. Si te entregaron el archivo `.env`, colocalo en la raiz del proyecto y salta al paso 7.
+   Si no lo tienes, crea un archivo llamado `.env` en la raiz (mismo nivel que `package.json`).
    En Windows verifica que no sea `.env.txt`.
-6. Copia y completa esta configuracion basica (reemplaza los valores de ejemplo).
+6. Copia y completa esta configuracion basica (reemplaza los valores de ejemplo) en tu `.env`.
    Si aun no tienes Atlas, ve a la seccion "MongoDB Atlas (Configuracion Recomendada)" y vuelve aqui.
 ```
 env
@@ -101,19 +109,20 @@ npm run start
 9. Swagger disponible en `http://localhost:3000/docs`.
 10. (Opcional) Prueba los endpoints desde Swagger o con `curl` (ver seccion JWT).
     Recuerda: `random` y `vote` son publicos; `list` y `me` requieren token.
+    Base URL local de la API: `http://localhost:3000/api/v1`.
 
 **Uso Paso a Paso**
 1. Registrar usuario (crea usuario, no devuelve token):
 ```
 bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:3000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@local","password":"super-seguro-123","name":"Demo"}'
 ```
 2. Login (aqui se obtiene el JWT):
 ```
 bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@local","password":"super-seguro-123"}'
 ```
@@ -121,32 +130,32 @@ curl -X POST http://localhost:3000/auth/login \
 4. Obtener un personaje aleatorio (sin token, rate limit 30/min):
 ```
 bash
-curl "http://localhost:3000/characters/random?source=pokemon"
+curl "http://localhost:3000/api/v1/characters/random?source=pokemon"
 ```
 5. Votar like/dislike (sin token, rate limit 30/min):
 ```
 bash
-curl -X POST http://localhost:3000/characters/vote \
+curl -X POST http://localhost:3000/api/v1/characters/vote \
   -H "Content-Type: application/json" \
   -d '{"source":"pokemon","sourceId":"25","name":"Pikachu","image":"https://img","vote":"like"}'
 ```
 6. Listar personajes guardados (requiere token):
 ```
 bash
-curl -H "Authorization: Bearer <tu_token>" "http://localhost:3000/characters?sortBy=likes&order=desc&limit=20&skip=0"
+curl -H "Authorization: Bearer <tu_token>" "http://localhost:3000/api/v1/characters?sortBy=likes&order=desc&limit=20&skip=0"
 ```
 7. Consultas rapidas (requieren token):
 ```
 bash
-curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/characters/top-like
+curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/characters/top-like
 ```
 ```
 bash
-curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/characters/top-dislike
+curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/characters/top-dislike
 ```
 ```
 bash
-curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/characters/last-evaluated
+curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/characters/last-evaluated
 ```
 8. Abrir Swagger para probar sin consola:
    `http://localhost:3000/docs`
@@ -298,20 +307,20 @@ npm run test
 ```
 
 **JWT (Uso Basico)**
-- El JWT se obtiene desde `POST /auth/login` (el registro solo crea el usuario).
-- `GET /characters/random` y `POST /characters/vote` son publicos (limitados a 30 req/min).
-- `GET /characters`, `GET /auth/me` requieren token JWT valido.
+- El JWT se obtiene desde `POST /api/v1/auth/login` (el registro solo crea el usuario).
+- `GET /api/v1/characters/random` y `POST /api/v1/characters/vote` son publicos (limitados a 30 req/min).
+- `GET /api/v1/characters`, `GET /api/v1/auth/me` requieren token JWT valido.
 
 Ejemplo de registro:
 ```
 bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:3000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@local","password":"super-seguro-123","name":"Demo"}'
 ```
 ```
 powershell
-curl -Method Post http://localhost:3000/auth/register `
+curl -Method Post http://localhost:3000/api/v1/auth/register `
   -Headers @{ "Content-Type" = "application/json" } `
   -Body '{"email":"demo@local","password":"super-seguro-123","name":"Demo"}'
 ```
@@ -319,13 +328,13 @@ curl -Method Post http://localhost:3000/auth/register `
 Ejemplo de login:
 ```
 bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@local","password":"super-seguro-123"}'
 ```
 ```
 powershell
-curl -Method Post http://localhost:3000/auth/login `
+curl -Method Post http://localhost:3000/api/v1/auth/login `
   -Headers @{ "Content-Type" = "application/json" } `
   -Body '{"email":"demo@local","password":"super-seguro-123"}'
 ```
@@ -333,29 +342,29 @@ curl -Method Post http://localhost:3000/auth/login `
 Ejemplos de llamadas con token:
 ```
 bash
-curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/auth/me
+curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/auth/me
 ```
 ```
 powershell
-curl -Headers @{ "Authorization" = "Bearer <tu_token>" } http://localhost:3000/auth/me
+curl -Headers @{ "Authorization" = "Bearer <tu_token>" } http://localhost:3000/api/v1/auth/me
 ```
 ```
 bash
-curl "http://localhost:3000/characters/random?source=pokemon"
+curl "http://localhost:3000/api/v1/characters/random?source=pokemon"
 ```
 ```
 powershell
-curl "http://localhost:3000/characters/random?source=pokemon"
+curl "http://localhost:3000/api/v1/characters/random?source=pokemon"
 ```
 ```
 bash
-curl -X POST http://localhost:3000/characters/vote \
+curl -X POST http://localhost:3000/api/v1/characters/vote \
   -H "Content-Type: application/json" \
   -d '{"source":"pokemon","sourceId":"25","name":"Pikachu","image":"https://img","vote":"like"}'
 ```
 ```
 powershell
-curl -Method Post http://localhost:3000/characters/vote `
+curl -Method Post http://localhost:3000/api/v1/characters/vote `
   -Headers @{ "Content-Type" = "application/json" } `
   -Body '{"source":"pokemon","sourceId":"25","name":"Pikachu","image":"https://img","vote":"like"}'
 ```
