@@ -2,23 +2,23 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
 
-export type CharacterSource = 'rickandmorty' | 'pokemon' | 'superhero';
+export type CharacterSource = 'rickandmorty' | 'pokemon' | 'superhero' | 'dragonball';
 export type VoteValue = 'like' | 'dislike';
 
 export class GetRandomCharacterQueryDto {
   @ApiPropertyOptional({
-    enum: ['rickandmorty', 'pokemon', 'superhero'],
+    enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'],
     description: 'Fuente desde la que obtener el personaje.',
     example: 'pokemon',
   })
   @IsOptional()
-  @IsEnum(['rickandmorty', 'pokemon', 'superhero'])
+  @IsEnum(['rickandmorty', 'pokemon', 'superhero', 'dragonball'])
   source?: CharacterSource;
 }
 
 export class CharacterResponseDto {
   @ApiProperty({
-    enum: ['rickandmorty', 'pokemon', 'superhero'],
+    enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'],
     example: 'pokemon',
   })
   source!: CharacterSource;
@@ -35,10 +35,10 @@ export class CharacterResponseDto {
 
 export class VoteCharacterRequestDto {
   @ApiProperty({
-    enum: ['rickandmorty', 'pokemon', 'superhero'],
+    enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'],
     example: 'pokemon',
   })
-  @IsEnum(['rickandmorty', 'pokemon', 'superhero'])
+  @IsEnum(['rickandmorty', 'pokemon', 'superhero', 'dragonball'])
   source!: CharacterSource;
 
   @ApiProperty({ example: '25' })
@@ -77,12 +77,12 @@ export class VoteCharacterResponseDto {
 
 export class ListCharactersQueryDto {
   @ApiPropertyOptional({
-    enum: ['rickandmorty', 'pokemon', 'superhero'],
+    enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'],
     description: 'Filtra por fuente.',
     example: 'pokemon',
   })
   @IsOptional()
-  @IsEnum(['rickandmorty', 'pokemon', 'superhero'])
+  @IsEnum(['rickandmorty', 'pokemon', 'superhero', 'dragonball'])
   source?: CharacterSource;
 
   @ApiPropertyOptional({
@@ -121,7 +121,7 @@ export class ListCharactersQueryDto {
 
 export class CharacterListItemDto {
   @ApiProperty({
-    enum: ['rickandmorty', 'pokemon', 'superhero'],
+    enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'],
     example: 'pokemon',
   })
   source!: CharacterSource;

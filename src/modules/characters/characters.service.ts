@@ -31,6 +31,9 @@ const POKEMON_API_BASE =
   process.env.POKEMON_API_BASE ?? 'https://pokeapi.co/api/v2';
 const SUPERHERO_API_BASE =
   process.env.SUPERHERO_API_BASE ?? 'https://superheroapi.com/api';
+const DRAGONBALL_API_BASE =
+  process.env.DRAGONBALL_API_BASE ?? 'https://dragonball-api.com/api';
+const DRAGONBALL_MAX_ID = Number(process.env.DRAGONBALL_MAX_ID ?? 58);
 
 @Injectable()
 export class CharactersService {
@@ -167,7 +170,7 @@ export class CharactersService {
   }
 
   private getAvailableSources(): CharacterSource[] {
-    const sources: CharacterSource[] = ['rickandmorty', 'pokemon'];
+    const sources: CharacterSource[] = ['rickandmorty', 'pokemon', 'dragonball'];
     if (process.env.SUPERHERO_API_KEY) {
       sources.push('superhero');
     }
@@ -182,6 +185,8 @@ export class CharactersService {
         return this.getPokemonCharacter();
       case 'superhero':
         return this.getSuperheroCharacter();
+      case 'dragonball':
+        return this.getDragonBallCharacter();
       default:
         throw new BadRequestException('Fuente no soportada.');
     }
@@ -265,6 +270,29 @@ export class CharactersService {
       sourceId: data.id ?? String(id),
       name: data.name ?? 'Desconocido',
       image: data.image?.url ?? '',
+    };
+  }
+
+  private async getDragonBallCharacter(): Promise<CharacterResponseDto> {
+    const maxId =
+      Number.isFinite(DRAGONBALL_MAX_ID) && DRAGONBALL_MAX_ID > 0 ? DRAGONBALL_MAX_ID : 58;
+    const id = this.randomId(maxId);
+    const response = await fetch(`${DRAGONBALL_API_BASE}/characters/${id}`);
+    if (!response.ok) {
+      throw new BadGatewayException('No se pudo obtener personaje de Dragon Ball.');
+    }
+
+    const data = (await response.json()) as {
+      id?: number;
+      name?: string;
+      image?: string;
+    };
+
+    return {
+      source: 'dragonball',
+      sourceId: data.id ? String(data.id) : String(id),
+      name: data.name ?? 'Desconocido',
+      image: data.image ?? '',
     };
   }
 

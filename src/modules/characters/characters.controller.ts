@@ -22,7 +22,7 @@ export class CharactersController {
   @ApiQuery({
     name: 'source',
     required: false,
-    enum: ['rickandmorty', 'pokemon', 'superhero'],
+    enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'],
   })
   @ApiResponse({ status: 200, description: 'Personaje obtenido', type: CharacterResponseDto })
   @ApiResponse({ status: 400, description: 'Parametro `source` invalido.' })
@@ -34,7 +34,7 @@ export class CharactersController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Listar personajes (paginado)' })
-  @ApiQuery({ name: 'source', required: false, enum: ['rickandmorty', 'pokemon', 'superhero'] })
+  @ApiQuery({ name: 'source', required: false, enum: ['rickandmorty', 'pokemon', 'superhero', 'dragonball'] })
   @ApiQuery({
     name: 'sortBy',
     required: false,
