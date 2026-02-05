@@ -88,12 +88,13 @@ BCRYPT_SALT_ROUNDS=10
 HASH=BX
 
 RICK_AND_MORTY_API_BASE=https://rickandmortyapi.com/api
+RICK_AND_MORTY_MAX_ID=826
 POKEMON_API_BASE=https://pokeapi.co/api/v2
 SUPERHERO_API_BASE=https://superheroapi.com/api
 DRAGONBALL_API_BASE=https://dragonball-api.com/api
 DRAGONBALL_MAX_ID=58
 # SUPERHERO_API_KEY=tu_api_key
-# SUPERHERO_MAX_ID=731
+SUPERHERO_MAX_ID=731
 
 RATE_LIMIT_TTL=60
 RATE_LIMIT_LIMIT=60
@@ -199,6 +200,8 @@ curl -H "Authorization: Bearer <tu_token>" http://localhost:3000/api/v1/characte
 - La conexion a MongoDB se hace con Mongoose y usa estas variables de entorno.
 - Puedes personalizar las rutas de las APIs externas con:
   `RICK_AND_MORTY_API_BASE`, `POKEMON_API_BASE`, `SUPERHERO_API_BASE`, `DRAGONBALL_API_BASE`.
+- Rick and Morty usa `RICK_AND_MORTY_MAX_ID` (por defecto 826).
+- Superhero usa `SUPERHERO_MAX_ID` (por defecto 731).
 - Dragon Ball usa `DRAGONBALL_MAX_ID` (por defecto 58).
 - Rate limit global:
   `RATE_LIMIT_TTL` (segundos) y `RATE_LIMIT_LIMIT` (peticiones).
@@ -222,7 +225,7 @@ La configuracion centralizada del proyecto vive aqui:
 - Pokemon (detalle): `GET ${POKEMON_API_BASE}/pokemon/{id}`.
 - Pokemon (campos usados): `id` -> `externalId`, `name`, `sprites.other['official-artwork'].front_default` o `sprites.front_default` -> `image`.
 - Pokemon (total): `GET ${POKEMON_API_BASE}/pokemon?limit=1`.
-- Pokemon (total usado): `count`.
+- Pokemon (total usado): `count` (se usa como maximo para el random).
 - Pokemon docs: `https://pokeapi.co/docs/v2`.
 - Superhero (detalle): `GET ${SUPERHERO_API_BASE}/{API_KEY}/{id}`.
 - Superhero (campos usados): `id` -> `externalId`, `name`, `image.url` -> `image`.

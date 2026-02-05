@@ -31,9 +31,11 @@ const POKEMON_API_BASE =
   process.env.POKEMON_API_BASE ?? 'https://pokeapi.co/api/v2';
 const SUPERHERO_API_BASE =
   process.env.SUPERHERO_API_BASE ?? 'https://superheroapi.com/api';
+const SUPERHERO_MAX_ID = Number(process.env.SUPERHERO_MAX_ID ?? 731);
 const DRAGONBALL_API_BASE =
   process.env.DRAGONBALL_API_BASE ?? 'https://dragonball-api.com/api';
 const DRAGONBALL_MAX_ID = Number(process.env.DRAGONBALL_MAX_ID ?? 58);
+const RICK_AND_MORTY_MAX_ID = Number(process.env.RICK_AND_MORTY_MAX_ID ?? 826);
 
 @Injectable()
 export class CharactersService {
@@ -278,7 +280,8 @@ export class CharactersService {
       throw new BadRequestException('Falta SUPERHERO_API_KEY para usar Superhero API.');
     }
 
-    const maxId = Number(process.env.SUPERHERO_MAX_ID ?? 731);
+    const maxId =
+      Number.isFinite(SUPERHERO_MAX_ID) && SUPERHERO_MAX_ID > 0 ? SUPERHERO_MAX_ID : 731;
     const id = this.randomId(maxId);
     const response = await fetch(`${SUPERHERO_API_BASE}/${apiKey}/${id}`);
     if (!response.ok) {
@@ -334,6 +337,10 @@ export class CharactersService {
       return this.rickAndMortyCount.value;
     }
 
+    const maxId =
+      Number.isFinite(RICK_AND_MORTY_MAX_ID) && RICK_AND_MORTY_MAX_ID > 0
+        ? RICK_AND_MORTY_MAX_ID
+        : 826;
     const response = await fetch(`${RICK_AND_MORTY_API_BASE}/character`);
     if (!response.ok) {
       throw new BadGatewayException('No se pudo obtener el total de Rick and Morty.');
@@ -341,8 +348,9 @@ export class CharactersService {
 
     const data = (await response.json()) as { info?: { count?: number } };
     const count = data.info?.count ?? 0;
-    this.rickAndMortyCount = { value: count, updatedAt: Date.now() };
-    return count;
+    const normalized = count > 0 ? Math.min(count, maxId) : maxId;
+    this.rickAndMortyCount = { value: normalized, updatedAt: Date.now() };
+    return normalized;
   }
 
   private async getPokemonCount(): Promise<number> {
@@ -356,7 +364,10 @@ export class CharactersService {
     }
 
     const data = (await response.json()) as { count?: number };
-    const count = data.count ?? 0;
+    const count = Number(data.count);
+    if (!Number.isFinite(count) || count < 1) {
+      throw new BadGatewayException('No se pudo obtener el total de Pokemon.');
+    }
     this.pokemonCount = { value: count, updatedAt: Date.now() };
     return count;
   }
