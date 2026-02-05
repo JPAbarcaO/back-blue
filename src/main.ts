@@ -6,6 +6,7 @@ import type { Connection } from "mongoose";
 import { AppModule } from "./app.module";
 import { MongooseReadyState } from "./common/constants/mongoose.constants";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { RequestLoggingInterceptor } from "./common/interceptors/request-logging.interceptor";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -44,6 +45,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new RequestLoggingInterceptor());
 
   const mongooseConnection = app.get<Connection>(getConnectionToken());
   if (mongooseConnection.readyState === MongooseReadyState.connected) {
