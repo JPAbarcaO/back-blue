@@ -335,6 +335,15 @@ npm run test
 - `GET /api/v1/characters/random` y `POST /api/v1/characters/vote` son publicos (limitados a 30 req/min).
 - `GET /api/v1/characters`, `GET /api/v1/auth/me` requieren token JWT valido.
 
+**Postman (Coleccion Simple)**
+Se incluye una coleccion basica en `postman/ms-blue.postman_collection.json` sin environment.
+1. En Postman, ve a `Collections` y presiona `Import`.
+2. Selecciona `Upload Files` y elige `postman/ms-blue.postman_collection.json`.
+3. Ejecuta `Auth > Login` y copia el `accessToken` del response.
+4. En los endpoints protegidos, reemplaza el header:
+   `Authorization: Bearer REPLACE_WITH_TOKEN` por tu token real.
+5. Si cambiaste el puerto o la URL base, edita las URLs dentro de la coleccion.
+
 Ejemplo de registro:
 ```
 bash
