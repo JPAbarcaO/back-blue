@@ -24,6 +24,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
         typeof payload === 'string'
           ? payload
           : (payload as { message?: string | string[] }).message ?? 'Error';
+      const method = request.method;
+      const path = request.url;
+      const normalizedMessage = Array.isArray(message) ? message.join('; ') : message;
+      const logLine = `${method} ${path} -> ${status} ${normalizedMessage}`;
+      if (status >= 500) {
+        this.logger.error(logLine);
+      } else {
+        this.logger.warn(logLine);
+      }
 
       response.status(status).json({
         statusCode: status,
@@ -34,7 +43,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    this.logger.error('Unhandled exception', exception as Error);
+    const method = request.method;
+    const path = request.url;
+    if (exception instanceof Error) {
+      this.logger.error(`${method} ${path} -> 500 ${exception.message}`, exception.stack);
+    } else {
+      this.logger.error(`${method} ${path} -> 500 Unknown error`);
+    }
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       path: request.url,
