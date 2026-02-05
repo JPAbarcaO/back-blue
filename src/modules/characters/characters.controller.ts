@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CharactersService } from './characters.service';
@@ -11,13 +12,12 @@ import {
   VoteCharacterResponseDto,
 } from './dto/characters.dto';
 @ApiTags('Characters')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('characters')
 export class CharactersController {
   constructor(private readonly charactersService: CharactersService) {}
 
   @Get('random')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'Obtener personaje aleatorio' })
   @ApiQuery({
     name: 'source',
@@ -26,12 +26,13 @@ export class CharactersController {
   })
   @ApiResponse({ status: 200, description: 'Personaje obtenido', type: CharacterResponseDto })
   @ApiResponse({ status: 400, description: 'Parametro `source` invalido.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getRandom(@Query() query: GetRandomCharacterQueryDto): Promise<CharacterResponseDto> {
     return this.charactersService.getRandomCharacter(query.source);
   }
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Listar personajes (paginado)' })
   @ApiQuery({ name: 'source', required: false, enum: ['rickandmorty', 'pokemon', 'superhero'] })
   @ApiQuery({
@@ -52,10 +53,10 @@ export class CharactersController {
   }
 
   @Post('vote')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'Votar un personaje' })
   @ApiResponse({ status: 201, description: 'Voto registrado', type: VoteCharacterResponseDto })
   @ApiResponse({ status: 400, description: 'Body invalido.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async vote(
     @Body() body: VoteCharacterRequestDto,
   ): Promise<VoteCharacterResponseDto> {

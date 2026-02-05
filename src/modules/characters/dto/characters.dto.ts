@@ -42,7 +42,15 @@ export class VoteCharacterRequestDto {
   source!: CharacterSource;
 
   @ApiProperty({ example: '25' })
-  @Transform(({ value }) => (value === undefined || value === null ? value : String(value)))
+  @Transform(({ value }: { value: unknown }) => {
+    if (value === undefined || value === null) {
+      return undefined;
+    }
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    return undefined;
+  })
   @IsString()
   @IsNotEmpty()
   sourceId!: string;
