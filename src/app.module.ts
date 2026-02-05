@@ -7,30 +7,8 @@ import { AppController } from './modules/app/app.controller';
 import { AppService } from './modules/app/app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { CharactersModule } from './modules/characters/characters.module';
-
-function buildMongoUri(configService: ConfigService): string {
-  const mongoUser = configService.get<string>('MONGO_USER');
-  const mongoPass = configService.get<string>('MONGO_PASS');
-  const mongoUrl = configService.get<string>('MONGO_URL');
-  const mongoDb = configService.get<string>('MONGO_DB');
-
-  const missing: string[] = [];
-  if (!mongoUser) missing.push('MONGO_USER');
-  if (!mongoPass) missing.push('MONGO_PASS');
-  if (!mongoUrl) missing.push('MONGO_URL');
-  if (!mongoDb) missing.push('MONGO_DB');
-
-  if (missing.length > 0) {
-    throw new Error(`Faltan variables de MongoDB: ${missing.join(', ')}.`);
-  }
-
-  const credentials = `${encodeURIComponent(mongoUser ?? '')}:${encodeURIComponent(
-    mongoPass ?? '',
-  )}`;
-  const host = mongoUrl ?? '';
-  const database = encodeURIComponent(mongoDb ?? '');
-  return `mongodb+srv://${credentials}@${host}/${database}?appName=Cluster0`;
-}
+import { buildMongoUri } from './config/mongo.config';
+import { buildThrottlerOptions } from './config/throttler.config';
 
 @Module({
   imports: [
@@ -45,14 +23,7 @@ function buildMongoUri(configService: ConfigService): string {
     }),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        throttlers: [
-          {
-            ttl: Number(configService.get<string>('RATE_LIMIT_TTL') ?? 60),
-            limit: Number(configService.get<string>('RATE_LIMIT_LIMIT') ?? 60),
-          },
-        ],
-      }),
+      useFactory: (configService: ConfigService) => buildThrottlerOptions(configService),
     }),
     AuthModule,
     CharactersModule,
